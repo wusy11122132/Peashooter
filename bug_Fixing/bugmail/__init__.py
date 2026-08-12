@@ -1,0 +1,2 @@
+"""Internal error email intake."""
+

@@ -1,0 +1,30 @@
+imap:
+  host: imap.example.com
+  port: 993
+  mailbox: INBOX
+  username: user@example.com
+  credential_service: codex-bugmail
+filters:
+  subject_contains: [Internal Error, GS Error]
+  keyword: [slots, GS Error]
+polling:
+  max_messages: 1
+  lease_minutes: 30
+  preview_scan_limit: 100
+  preview_since: "2026-01-01T00:00:00+08:00"
+analysis:
+  fingerprint_cooldown_hours: 6
+  max_evidence_chars: 8000
+  timeout_seconds: 300
+  show_scheduled_approval: true
+  actionable: [code_change, database_change, config_change]
+  codex_executable: ""
+  sql_output_file: xxx.sql
+  reports_directory: var/reports
+vhosts:
+  directory: ./vhosts
+  overrides: {}
+state:
+  database: var/state.sqlite3
+  evidence_directory: var/evidence
+  status_file: var/status.json
