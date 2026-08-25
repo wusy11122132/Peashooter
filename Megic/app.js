@@ -14,6 +14,11 @@ export const followUps = [
   '我忽略了什么？'
 ];
 
+export const spreads = [
+  { id: 'timeline', label: '过去 · 现在 · 未来', hint: '映出事情留下的痕迹、正在发生的波纹，以及尚未显现的方向。', positions: ['过去', '现在', '未来'] },
+  { id: 'guidance', label: '状态 · 阻碍 · 建议', hint: '理解当下的处境，并找到一小步可以行动的方向。', positions: ['状态', '阻碍', '建议'] }
+];
+
 export const cards = [
   { id: 'fool', name: '愚者', number: '0', symbol: '0', keywords: '起点 · 信任 · 自由', upright: '新的旅程正在向你打开。你不必先知道所有答案，先允许自己迈出第一步。', reversed: '你可能把谨慎误认为胆怯，也可能把冲动误认为自由。出发前，确认脚下还有一小块稳固的地方。', themes: { love: '关系里有新鲜空气。放下预设，真诚地表达一次好奇。', work: '新的尝试值得被认真对待，不必等到完全准备好才开始。', mood: '今天可以只负责走一步，不用把整条路都想明白。', future: '未来不是一张写好的地图，而是你走出去后才显现的路。', open: '有一扇门没有上锁。你想不想试着推开它？' }, actions: ['把想做的事拆成一个十分钟能完成的小动作。', '给一个新想法留下试验的空间，不急着评判它。'] },
   { id: 'magician', name: '魔术师', number: 'I', symbol: 'I', keywords: '行动 · 资源 · 创造', upright: '你手边已经有比想象中更多的资源。真正缺少的，也许只是把它们放在一起。', reversed: '能量有些分散，或许你在等待一个更完美的工具。先把已有的东西用起来。', themes: { love: '你拥有改变相处方式的主动权，一句清楚的话比猜测更有力量。', work: '把能力、经验和机会连接起来，今天适合开始搭建。', mood: '别只观察自己的情绪，也可以温柔地为它做一点安排。', future: '你不是被动等待未来的人，你正在参与它的形成。', open: '你手里的那张牌，可能比你以为的更有用。' }, actions: ['列出手边的三个资源，并选择一个立刻使用。', '把一个模糊愿望写成可以执行的句子。'] },
@@ -146,12 +151,32 @@ export function drawCard(deck, random = Math.random, excludedIds = []) {
   return { card, orientation };
 }
 
+export function drawSpread(deck, spread, random = Math.random, excludedIds = []) {
+  const cardsInSpread = [];
+  const usedIds = [...excludedIds];
+  for (const position of spread.positions) {
+    const drawn = drawCard(deck, random, usedIds);
+    cardsInSpread.push({ ...drawn, position });
+    usedIds.push(drawn.card.id);
+  }
+  return { spread, positions: spread.positions, cards: cardsInSpread };
+}
+
 export function getEasterEgg(cardIds = []) {
   const ids = new Set(cardIds);
   if (ids.has('star') && ids.has('moon')) return '星星与月亮同时出现：希望和直觉正在同一片夜色里说话。';
   if (ids.has('fool') && ids.has('world')) return '愚者与世界相遇：一段旅程完成了，而新的旅程已经在门外。';
   if (ids.has('death') && ids.has('sun')) return '死神与太阳相遇：结束之后，光会更容易被看见。';
-  if (cardIds.length >= 3 && cardIds.every(id => cards.find(card => card.id === id)?.number?.length <= 3)) return '三道象征在此刻交汇，像有一条线悄悄浮现。';
+  if (cardIds.length >= 3 && cardIds.every(id => cards.find(card => card.id === id)?.number?.length <= 3)) {
+    const variants = [
+      '三道象征在此刻交汇，像有一条线悄悄浮现。',
+      '三张牌落在同一片静默里，某个主题正慢慢显形。',
+      '牌面的光彼此牵引，把一段尚未说完的话带到你面前。',
+      '这几张牌像沿着同一阵风而来，指向一个值得留意的方向。'
+    ];
+    const index = cardIds.join('').split('').reduce((total, char) => total + char.charCodeAt(0), 0) % variants.length;
+    return variants[index];
+  }
   return '';
 }
 
@@ -173,7 +198,7 @@ export function buildReading(card, themeId, mood, followUp, orientation) {
   };
 }
 
-const state = { theme: 'open', mood: '好奇', drawn: null, history: loadHistory() };
+const state = { theme: 'open', mood: '好奇', spread: null, drawn: null, history: loadHistory() };
 
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem('today-heart-history') || '[]'); } catch { return []; }
@@ -202,7 +227,9 @@ function setPhase(phase) {
 }
 
 function draw() {
-  state.drawn = drawCard(cards, Math.random, state.history.map(item => item.id));
+  const excluded = state.history.map(item => item.id);
+  state.drawn = state.spread ? { type: 'spread', ...drawSpread(cards, state.spread, Math.random, excluded) } : { type: 'single', ...drawCard(cards, Math.random, excluded) };
+  if (state.drawn.type === 'spread') return drawSpreadView();
   const { card, orientation } = state.drawn;
   $('.card-face .card-number').textContent = card.number;
   $('.card-face .card-name').textContent = card.name;
@@ -215,7 +242,17 @@ function draw() {
   setTimeout(() => { $('#card-status').textContent = `${card.name} · ${orientation}`; $('#followup-options').innerHTML = followUps.map(text => `<button class="followup" data-followup="${text}">${text}<span>↗</span></button>`).join(''); }, 900);
 }
 
+function drawSpreadView() {
+  const stage = $('.card-stage');
+  stage.innerHTML = state.drawn.cards.map(({ card, orientation, position }, index) => `<div class="spread-card-wrap"><span class="spread-position">${position}</span><div class="card spread-card" style="--i:${index}"><div class="card-back"><div class="back-orbit">✦</div><div class="back-title">今日<br>心象</div><div class="back-line"></div></div><div class="card-face"><span class="card-number">${card.number}</span><span class="card-symbol">${card.symbol}</span><div class="card-illustration">☾<span>✦</span>◌</div><span class="card-name">${card.name}</span><span class="card-keywords">${card.keywords}</span></div></div><small>${orientation}</small></div>`).join('');
+  $('#draw-button').disabled = true;
+  setPhase('reveal');
+  setTimeout(() => stage.querySelectorAll('.card').forEach(card => card.classList.add('flipped')), 600);
+  setTimeout(() => { $('#card-status').textContent = state.spread.label; $('#followup-options').innerHTML = '<button class="followup" data-followup="spread">查看三张牌的讯息 <span>↗</span></button>'; }, 1000);
+}
+
 function showReading(followUp) {
+  if (state.drawn.type === 'spread') return showSpreadReading();
   const { card, orientation } = state.drawn;
   const theme = themes.find(item => item.id === state.theme);
   const reading = buildReading(card, state.theme, state.mood, followUp, orientation);
@@ -233,15 +270,32 @@ function showReading(followUp) {
   setPhase('reading');
 }
 
-function reset() { state.drawn = null; renderThemeOptions(); setPhase('setup'); $('#draw-button').disabled = false; $('#card-status').textContent = '尚未抽牌'; }
+function showSpreadReading() {
+  const theme = themes.find(item => item.id === state.theme);
+  const cardsMarkup = state.drawn.cards.map(({ card, orientation, position }) => `<article class="spread-reading-item"><span>${position}</span><h3>${card.name} · ${orientation}</h3><p>${card.themes[state.theme] || card.themes.open}</p><small>${card.keywords}</small></article>`).join('');
+  $('#reading-theme').textContent = `${state.spread.label} · ${theme.label}`;
+  $('#reading-title').textContent = '三张牌的方向';
+  $('#reading-keywords').textContent = state.drawn.cards.map(item => item.card.name).join(' · ');
+  $('#reading-body').textContent = '三张牌分别映出事情留下的痕迹、正在发生的波纹，以及尚未显现的方向。让牌面替你照亮其中的联系。';
+  $('#reading-annotation').textContent = cardsMarkup.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  $('#reading-action').textContent = '从三张牌里挑出最想回应的一张，给它安排一个具体的小动作。';
+  $('#reading-easter-egg').textContent = getEasterEgg([...state.history.map(item => item.id), ...state.drawn.cards.map(item => item.card.id)]);
+  $('#reading-easter-egg').hidden = !$('#reading-easter-egg').textContent;
+  state.drawn.cards.forEach(({ card, orientation }) => saveHistory({ id: card.id, card: card.name, orientation, theme: theme.label, date: new Date().toISOString() }));
+  renderHistory();
+  setPhase('reading');
+}
+
+function reset() { state.drawn = null; $('.card-stage').innerHTML = '<div class="card"><div class="card-back"><div class="back-orbit">✦</div><div class="back-title">今日<br>心象</div><div class="back-line"></div></div><div class="card-face"><span class="card-number"></span><span class="card-symbol"></span><div class="card-illustration">☾<span>✦</span>◌</div><span class="card-name"></span><span class="card-keywords"></span></div></div>'; renderThemeOptions(); setPhase('setup'); $('#draw-button').disabled = false; $('#card-status').textContent = '尚未抽牌'; }
 
 if (typeof document !== 'undefined') {
   renderThemeOptions(); renderHistory(); setPhase('setup');
   document.addEventListener('click', event => {
-    const target = event.target.closest('[data-theme], [data-mood], [data-action], [data-followup]');
+    const target = event.target.closest('[data-theme], [data-mood], [data-spread], [data-action], [data-followup]');
     if (!target) return;
     if (target.dataset.theme) { state.theme = target.dataset.theme; renderThemeOptions(); }
     if (target.dataset.mood) { state.mood = target.dataset.mood; renderThemeOptions(); }
+    if (target.dataset.spread) { state.spread = target.dataset.spread === 'single' ? null : spreads.find(spread => spread.id === target.dataset.spread); renderThemeOptions(); }
     if (target.dataset.action === 'draw') draw();
     if (target.dataset.action === 'reset') reset();
     if (target.dataset.followup) showReading(target.dataset.followup);
