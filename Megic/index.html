@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111522">
+  <title>今日心象局 · 一次温柔的塔罗占卜</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar"><a class="brand" href="."><span class="brand-mark">✦</span><span>今日心象局</span></a><span class="top-note">A gentle tarot moment</span></header>
+  <main class="app-shell">
+    <section class="intro"><p class="eyebrow">观己一刻</p><p class="intro-copy">不预测命运，只陪你看见此刻的心。<br>准备好后，选择一个想靠近的主题。</p></section>
+    <section class="ritual-panel" data-phase="setup">
+      <div class="panel-heading"><span>01 / 选择你的心象</span><span class="dot-status"><i></i> 安静连接中</span></div>
+      <div id="theme-options" class="theme-options"></div>
+      <div class="mood-row"><span>今天更接近</span><div id="mood-options" class="mood-options"></div></div>
+      <div class="question-line"><span class="question-mark">?</span><span>你可以在心里默念一个问题，也可以什么都不问。</span></div>
+      <button id="draw-button" class="primary-button" data-action="draw"><span>开始洗牌</span><b>→</b></button>
+    </section>
+    <section class="ritual-panel draw-panel" data-phase="reveal" hidden>
+      <div class="panel-heading"><span>02 / 牌面正在靠近</span><span id="card-status" class="card-status">洗牌中</span></div>
+      <div class="card-stage"><div class="card"><div class="card-back"><div class="back-orbit">✦</div><div class="back-title">今日<br>心象</div><div class="back-line"></div></div><div class="card-face"><span class="card-number"></span><span class="card-symbol"></span><div class="card-illustration">☾<span>✦</span>◌</div><span class="card-name"></span><span class="card-keywords"></span></div></div></div>
+      <div class="followup-wrap"><p class="section-label">牌面已经翻开。你想继续问：</p><div id="followup-options" class="followup-options"></div></div>
+    </section>
+    <section class="reading-panel" data-phase="reading" hidden>
+      <div class="panel-heading"><span>03 / 给今天的你</span><span id="reading-theme" class="card-status"></span></div>
+      <div class="reading-card"><div class="reading-top"><span id="reading-keywords"></span><span class="seal">✦</span></div><h2 id="reading-title"></h2><p id="reading-body"></p><div class="action-note"><span>可以带走的一件小事</span><strong id="reading-action"></strong></div></div>
+      <div class="reading-actions"><button class="text-button" data-action="reset">再抽一张 <span>↗</span></button><span class="save-note">这一刻，已经被轻轻收好</span></div>
+    </section>
+    <aside class="history-panel"><div class="panel-heading"><span>最近的牌迹</span><span>仅保存在此设备</span></div><ul id="history"></ul></aside>
+  </main>
+  <footer><span>Tarot is a mirror, not a verdict.</span><span>今日心象局 · v0.1</span></footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
