@@ -183,10 +183,54 @@ export function getEasterEgg(cardIds = []) {
 export function buildReading(card, themeId, mood, followUp, orientation) {
   const themeText = card.themes[themeId] || card.themes.open;
   const baseText = orientation === '逆位' ? card.reversed : card.upright;
+  const actionReplies = [
+    '不必一次走完所有路，先让脚下的这一小步清晰起来。',
+    '牌面没有催促你远行，它只把下一盏灯点在了手边。',
+    '今天适合把愿望落到一个动作上，让心里的变化有迹可循。',
+    '先做一件不会辜负自己的小事，方向会在行动之后慢慢显现。',
+    '无需向任何人证明什么，安静地为自己留出一个开始。',
+    '把注意力收回眼前，最轻的那一步，也可以成为转折。',
+    '如果还没有答案，就先照顾好此刻的自己，这也是一种前进。',
+    '让行动小到今天就能完成，新的回声会从那里开始。',
+    '不必向远方索取答案，先整理好眼前的一寸光。',
+    '把一个念头写下来，模糊的路会因此多出一个坐标。',
+    '今天只需回应最靠近你的那件事，其余的交给时间。',
+    '如果心里有一扇门，先为自己确认它是否真的上了锁。',
+    '给迟迟没有开始的事一个名字，也给它一个轻盈的开端。',
+    '先收回一部分力气，等你站稳之后，方向会更清楚。',
+    '把想象中的重量放到纸上，它也许没有你以为的那么沉。',
+    '今天适合完成一个小小的告别，为新的可能留出位置。',
+    '不必追赶变化，先观察它正在把什么带到你面前。',
+    '将一次犹豫变成一个问题，再为这个问题寻找一点事实。',
+    '让你的选择有一个诚实的理由，而不是只留下一个结果。',
+    '先照看自己的边界，真正重要的事不会因此离你更远。',
+    '从一个最容易被忽略的细节开始，那里可能藏着答案。',
+    '今天可以少做一点，但请把那一点做得和自己站在一起。',
+    '把一个愿望交给日程，而不是继续交给想象。',
+    '在行动之前，先问问这一步是否让你更接近真正想要的生活。',
+    '给自己一次不完美的尝试，路不需要从第一步就显得壮阔。',
+    '如果无法改变整片潮汐，就先调整手中的一盏灯。',
+    '把一句想说的话练习说给自己听，声音会带来新的确定。',
+    '今天的勇气可以很安静：完成，然后不再反复责问自己。',
+    '为正在生长的事做一点实际准备，等待也可以有形状。'
+  ];
+  let actionReplyIndex;
+  if (followUp.includes('做什么')) {
+    const start = hashText(`${card.id}-${themeId}-${mood}-${orientation}`) % actionReplies.length;
+    const usedReplies = arguments[5];
+    actionReplyIndex = start;
+    if (usedReplies) {
+      for (let offset = 0; offset < actionReplies.length; offset += 1) {
+        const candidate = (start + offset) % actionReplies.length;
+        if (!usedReplies.has(candidate)) { actionReplyIndex = candidate; usedReplies.add(candidate); break; }
+      }
+      if (usedReplies.size === actionReplies.length) usedReplies.clear();
+    }
+  }
   const followText = followUp.includes('担心')
     ? `你可以留意“${mood}”背后真正想被保护的部分。`
     : followUp.includes('做什么')
-      ? '答案不要求你立刻完成一切，只邀请你先做一件真实而具体的小事。'
+      ? actionReplies[actionReplyIndex]
       : '不要只看眼前的表面，给那些被忽略的感受留一点位置。';
   const actions = card.actions;
   return {
@@ -194,11 +238,16 @@ export function buildReading(card, themeId, mood, followUp, orientation) {
     body: `${baseText} ${themeText} ${followText}`,
     action: actions[Math.floor((mood.length + followUp.length) % actions.length)],
     keywords: card.keywords,
-    annotation: card.annotation
+    annotation: card.annotation,
+    actionReplyIndex
   };
 }
 
-const state = { theme: 'open', mood: '好奇', spread: null, drawn: null, history: loadHistory() };
+function hashText(value) {
+  return [...value].reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 7);
+}
+
+const state = { theme: 'open', mood: '好奇', spread: null, drawn: null, history: loadHistory(), usedActionReplies: new Set() };
 
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem('today-heart-history') || '[]'); } catch { return []; }
@@ -255,7 +304,7 @@ function showReading(followUp) {
   if (state.drawn.type === 'spread') return showSpreadReading();
   const { card, orientation } = state.drawn;
   const theme = themes.find(item => item.id === state.theme);
-  const reading = buildReading(card, state.theme, state.mood, followUp, orientation);
+  const reading = buildReading(card, state.theme, state.mood, followUp, orientation, state.usedActionReplies);
   $('#reading-title').textContent = reading.title;
   $('#reading-keywords').textContent = reading.keywords;
   $('#reading-body').textContent = reading.body;

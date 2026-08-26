@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">今日心象局</title>
+  <desc id="desc">深蓝底色上的金色月相与星点标志</desc>
+  <rect width="512" height="512" rx="112" fill="#111522"/>
+  <circle cx="256" cy="256" r="154" fill="none" stroke="#d6b77a" stroke-width="6" opacity=".72"/>
+  <path d="M285 125c-47 20-76 66-76 119 0 69 55 125 124 125 25 0 49-7 69-20-25 48-75 81-133 81-83 0-150-67-150-150s67-150 150-150c6 0 11 0 16 1Z" fill="#d6b77a"/>
+  <path d="M351 159l8 20 21 8-21 8-8 20-8-20-21-8 21-8 8-20Z" fill="#f1d59a"/>
+  <path d="M155 210l5 13 14 5-14 5-5 13-5-13-14-5 14-5 5-13Z" fill="#f1d59a" opacity=".9"/>
+  <circle cx="348" cy="302" r="6" fill="#f1d59a"/>
+  <circle cx="177" cy="326" r="4" fill="#d6b77a"/>
+</svg>
