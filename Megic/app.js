@@ -180,6 +180,40 @@ export function getEasterEgg(cardIds = []) {
   return '';
 }
 
+const readingOpeners = [
+  '牌面先沉默了一会儿，像在等你听见自己的声音。',
+  '一阵很轻的风掠过牌面，某个念头也随之浮了上来。',
+  '这张牌没有急着给出答案，只把一束光落在你正在经历的地方。',
+  '牌中的象征彼此靠近，像夜色里有一条隐约可见的路。',
+  '先别急着翻译这张牌，它正在用另一种方式靠近你。',
+  '此刻的牌面像一扇半掩的门，门后藏着你已经感觉到的事。',
+  '有些讯息不会大声出现，它们只在你放慢时留下回声。',
+  '这张牌带着从远处而来的月色，让眼前的心绪显出轮廓。',
+  '牌面映出一小片内在天气，云层之后似乎仍有东西在生长。',
+  '象征在这里停驻片刻，仿佛提醒你回望那个尚未说完的念头。',
+  '今天的答案没有藏得很深，它只是披着一层需要耐心读懂的雾。',
+  '这张牌像一枚落入水面的星星，涟漪正从你心里慢慢展开。'
+];
+
+const moodReflections = {
+  犹豫: ['你的迟疑并不是空白，它也许正在保护一个重要的愿望。', '摇摆之间仍有方向，只是它还没有被你说出口。'],
+  期待: ['你所等待的未必只是结果，也可能是一个允许自己相信的理由。', '期待正在替未来留一盏灯，也请记得看见此刻已经拥有的光。'],
+  疲惫: ['疲惫让一切显得更远，先把力气还给自己，答案会重新靠近。', '此刻不必证明自己还能走多远，停下来也是与命运相处的一种方式。'],
+  失落: ['失落并不抹去曾经发生的意义，它只是提醒你，有一部分心还需要被安放。', '有些告别要经过心口，才会慢慢变成新的空间。'],
+  好奇: ['你的好奇像一枚钥匙，正在打开一个尚未命名的可能。', '先让问题保持一点神秘，答案也许会在探索中改变形状。']
+};
+
+const overlookedReplies = [
+  '也许被你放在角落的，不是答案，而是一个一直没有被承认的感受。',
+  '请回头看一眼那些被匆匆略过的细节，它们可能比结论更接近真相。',
+  '你真正忽略的，或许是自己已经知道，却还没有准备承认的那句话。',
+  '在急着继续向前之前，先问问心里哪一部分还停留在原地。',
+  '有一份需要被照看的柔软藏在表面之下，它不要求你立刻解决什么。',
+  '别让别人的声音盖过内在的回声，那里面也有值得相信的指引。',
+  '你可能忽略了事情正在变化的证据，因为它出现得比期待更安静。',
+  '真正需要留意的，也许不是失去什么，而是你因此不再允许自己渴望什么。'
+];
+
 export function buildReading(card, themeId, mood, followUp, orientation) {
   const themeText = card.themes[themeId] || card.themes.open;
   const baseText = orientation === '逆位' ? card.reversed : card.upright;
@@ -259,11 +293,14 @@ export function buildReading(card, themeId, mood, followUp, orientation) {
       if (usedReplies.size === actionReplies.length) usedReplies.clear();
     }
   }
+  const moodOptions = moodReflections[mood] || moodReflections.好奇;
+  const openingText = readingOpeners[hashText(`${card.id}-${themeId}-${orientation}-opening`) % readingOpeners.length];
+  const moodText = moodOptions[hashText(`${card.id}-${themeId}-${mood}-${orientation}-mood`) % moodOptions.length];
   const followText = followUp.includes('担心')
     ? `你可以留意“${mood}”背后真正想被保护的部分。`
     : followUp.includes('做什么')
       ? actionReplies[actionReplyIndex]
-      : '不要只看眼前的表面，给那些被忽略的感受留一点位置。';
+      : overlookedReplies[hashText(`${card.id}-${themeId}-${mood}-${orientation}-overlooked`) % overlookedReplies.length];
   const usedActions = arguments[6];
   let actionIndex = hashText(`${card.id}-${themeId}-${mood}-${orientation}-action`) % actionAdvice.length;
   if (usedActions) {
@@ -275,7 +312,7 @@ export function buildReading(card, themeId, mood, followUp, orientation) {
   }
   return {
     title: `${card.name} · ${orientation}`,
-    body: `${baseText} ${themeText} ${followText}`,
+    body: `${openingText} ${baseText} ${themeText} ${moodText} ${followText}`,
     action: actionAdvice[actionIndex],
     keywords: card.keywords,
     annotation: card.annotation,
