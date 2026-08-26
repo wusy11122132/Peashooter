@@ -214,6 +214,38 @@ export function buildReading(card, themeId, mood, followUp, orientation) {
     '今天的勇气可以很安静：完成，然后不再反复责问自己。',
     '为正在生长的事做一点实际准备，等待也可以有形状。'
   ];
+  const actionAdvice = [
+    '把今天最想回应的事写成一个十分钟内能完成的动作。',
+    '为这件事留出一段不被打扰的时间，让念头有机会落地。',
+    '先完成最小的一步，不必同时解决它带来的所有问题。',
+    '把一个模糊的愿望写进今天的安排里。',
+    '向一个值得信任的人说出你此刻真正的想法。',
+    '清理一件已经不再需要的东西，为新的可能留出位置。',
+    '给自己的身体一个明确的照顾：水、食物、休息或阳光。',
+    '把你正在担心的事分成事实、猜测和下一步。',
+    '今天拒绝一件不必要的消耗，把时间还给自己。',
+    '把一个迟迟未决定的问题改写成一个可以回答的问题。',
+    '完成一件小收尾，让悬而未决的事情少一件。',
+    '为一个重要选择列出你最在意的三个标准。',
+    '给一段关系留出真实交流的空间，不急着得出结论。',
+    '观察一次情绪出现时的身体反应，不必立刻改变它。',
+    '把今天的注意力交给一件事，而不是同时追赶很多方向。',
+    '找一个安静的角落，写下你不想再假装没看见的事。',
+    '为未来的自己准备一件会让明天轻松一点的事。',
+    '试着用更温柔的语气，重新对自己说一遍刚才的批评。',
+    '如果你想等待，就为等待设定一个清楚的时间边界。',
+    '把一个旧习惯暂停一天，看看空出来的位置会发生什么。',
+    '记录一件今天确实完成的事，不把它从功劳里删掉。',
+    '给正在成长的计划补上一个具体的下一节点。',
+    '把一次冲动延迟到明天，再决定它是否仍然重要。',
+    '从一个你已经拥有的资源开始，而不是继续寻找更多工具。',
+    '把内心的答案说得更简单一点，直到自己听得懂。',
+    '为自己设一道边界，并提前想好如何温和地表达它。',
+    '做一次短暂的散步，让思绪在身体移动时重新排列。',
+    '选择一个值得保留的方向，暂时放下另外几个分支。',
+    '给一个被忽略的感受命名，名字会让它不再那么混乱。',
+    '今天只追求诚实和完成，不追求漂亮或完美。'
+  ];
   let actionReplyIndex;
   if (followUp.includes('做什么')) {
     const start = hashText(`${card.id}-${themeId}-${mood}-${orientation}`) % actionReplies.length;
@@ -232,11 +264,19 @@ export function buildReading(card, themeId, mood, followUp, orientation) {
     : followUp.includes('做什么')
       ? actionReplies[actionReplyIndex]
       : '不要只看眼前的表面，给那些被忽略的感受留一点位置。';
-  const actions = card.actions;
+  const usedActions = arguments[6];
+  let actionIndex = hashText(`${card.id}-${themeId}-${mood}-${orientation}-action`) % actionAdvice.length;
+  if (usedActions) {
+    for (let offset = 0; offset < actionAdvice.length; offset += 1) {
+      const candidate = (actionIndex + offset) % actionAdvice.length;
+      if (!usedActions.has(candidate)) { actionIndex = candidate; usedActions.add(candidate); break; }
+    }
+    if (usedActions.size === actionAdvice.length) usedActions.clear();
+  }
   return {
     title: `${card.name} · ${orientation}`,
     body: `${baseText} ${themeText} ${followText}`,
-    action: actions[Math.floor((mood.length + followUp.length) % actions.length)],
+    action: actionAdvice[actionIndex],
     keywords: card.keywords,
     annotation: card.annotation,
     actionReplyIndex
@@ -247,7 +287,7 @@ function hashText(value) {
   return [...value].reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 7);
 }
 
-const state = { theme: 'open', mood: '好奇', spread: null, drawn: null, history: loadHistory(), usedActionReplies: new Set() };
+const state = { theme: 'open', mood: '好奇', spread: null, drawn: null, history: loadHistory(), usedActionReplies: new Set(), usedActionAdvice: new Set() };
 
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem('today-heart-history') || '[]'); } catch { return []; }
@@ -304,7 +344,7 @@ function showReading(followUp) {
   if (state.drawn.type === 'spread') return showSpreadReading();
   const { card, orientation } = state.drawn;
   const theme = themes.find(item => item.id === state.theme);
-  const reading = buildReading(card, state.theme, state.mood, followUp, orientation, state.usedActionReplies);
+  const reading = buildReading(card, state.theme, state.mood, followUp, orientation, state.usedActionReplies, state.usedActionAdvice);
   $('#reading-title').textContent = reading.title;
   $('#reading-keywords').textContent = reading.keywords;
   $('#reading-body').textContent = reading.body;
